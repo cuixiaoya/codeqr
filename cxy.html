@@ -1,0 +1,161 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ko" lang="ko">
+<head>
+<title>Javascript 二维码生成库：QRCode</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+<script type="text/javascript" src="http://static.runoob.com/assets/jquery/2.0.3/jquery.min.js"></script>
+<script type="text/javascript" src="http://static.runoob.com/assets/qrcode/qrcode.min.js"></script>
+
+<link rel="stylesheet" href="mydate.css">
+<script src="mydate.js"></script>
+
+<link rel="stylesheet" href="css/normalize.css" type="text/css" />
+
+<link rel="stylesheet" href="css/style.css" type="text/css" />
+
+<link rel="stylesheet" href="css/colpick.css" type="text/css" />
+
+<script src="js/jquery.min.js"></script>
+
+<script src="js/colpick.js"></script>
+
+<script src="js/plugin.js"></script>
+
+<style>
+	body{
+		padding: 30px;
+	}
+</style>
+</head>
+<body>
+
+<div><button id="makecodeid">生成二维码</button> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<button id="btndownload">下载</button></div>
+<h5>填入链接地址：</h5>
+<div><input id="urltext" type="text" value="" style="min-width:60%;height: 30px;" />
+</div>
+<h5>二维码宽高：</h5>
+<div><span>宽度：</span><input id="width" type="text"/><br /><br /><span>高度：</span><input id="height" type="text"/></div>
+<h5>二维码颜色：</h5>
+<div class="example dark-example clearfix">
+	<div class="example-ex">
+		#<input type="text" id="picker3">
+	</div>
+	<div class="clear"></div>
+</div>
+<h5>二维码过期日期时间：</h5>
+<div><input id="time" onclick="MyDatePick({fmt:'datetime'})" type="text"></div>
+</div>
+<canvas id="myCanvas" width="200" height="100" style="overflow: hidden;border-radius: 10px;opacity: 0;position: absolute;bottom: 0;right: 0;">
+</canvas>
+<br />
+<div id="qrcode" style="width:100px; height:100px; margin-top:15px;"></div>
+
+
+
+<script type="text/javascript">
+class MakeCode{
+	constructor(){
+		this.objQrcode = document.getElementById("qrcode");
+		this.objUrltext = document.getElementById("urltext");
+		this.objWidth = document.getElementById("width");
+		this.objHidth = document.getElementById("height");
+		this.objColor = document.getElementById("picker3");
+		this.objTime = document.getElementById("time");
+		this.qrcode = null;
+	}
+	init(){
+		this.qrcode =  new QRCode(document.getElementById("qrcode"), {
+		});
+		this.listenEvent();
+		// this.makeCode();
+	}
+	makeCode(){
+		const that = this;
+		var elText = that.objUrltext;
+		if (!elText.value) {
+			alert("请输入url地址");
+			// elText.focus();
+			return;
+		}
+		that.qrcode.clear(); // 清除代码
+		that.objQrcode.innerHTML = '';
+		that.getConfig();
+		that.qrcode =	new QRCode(that.objQrcode, that.config);
+		var val = elText.value;
+		if(val.indexOf('?') === -1 && that.invalidTime){
+			val = val + '?invalidTime=' + that.invalidTime;
+		}else{
+			val = val.replace('?','?invalidTime=' + that.invalidTime + '&');
+		}
+		that.urlVal = val;
+		console.log(this);
+		that.qrcode.makeCode(val);
+	}
+	getConfig(){
+		this.config = {
+			width : Number(this.objWidth.value) || 200,
+			height :Number(this.objHidth.value) || 200,
+			colorDark : this.objColor.value ?  '#' + this.objColor.value : '#000',
+			correctLevel : QRCode.CorrectLevel.H
+		}
+		this.invalidTime = (new Date(this.objTime.value)).getTime() || null;
+	}
+
+	listenEvent(){
+		const that = this;
+		$("#urltext").
+			on("blur", function () {
+				that.makeCode();
+			}).
+			on("keydown", function (e) {
+				if (e.keyCode == 13) {
+					that.makeCode();
+				}
+			});
+		$("#btndownload").
+			on("click", function () {
+				that.download();
+			});
+
+		$("#makecodeid").
+		on("click", function () {
+			that.makeCode();
+		});
+	
+	}
+	saveFile(data, filename){
+			var save_link = document.createElementNS('http://www.w3.org/1999/xhtml', 'a');
+			save_link.href = data;
+			save_link.download = filename;
+			
+			var event = document.createEvent('MouseEvents');
+			event.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+			save_link.dispatchEvent(event);
+	}
+	download(){
+		const that = this;
+		var c = document.getElementById("myCanvas");
+		c.setAttribute('width',that.config.width || 200);
+		c.setAttribute('height',that.config.height || 200);
+		var ctx=c.getContext("2d");
+		var img=new Image();
+		img.onload = function(){
+			ctx.drawImage(img,0,0);
+		};
+		const aa = document.getElementById("qrcode");
+		const bb = aa.getElementsByTagName('img')[0];
+		img.src = bb.src;
+		setTimeout(()=>{
+			var dataURL = c.toDataURL("image/png");
+			that.saveFile(dataURL,(new Date()).getTime() + '.jpg');
+		},1000);
+		
+	}
+}
+
+const code = new MakeCode();
+code.init();
+</script>
+</body>
+</html>
